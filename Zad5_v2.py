@@ -24,8 +24,7 @@ def get_rates(currency, days):
     sum = 0
     rates = {}
     for d in data['rates'].keys():
-        #rates.append(data['rates'][d]['EUR'])
-        rates[d] = data['rates'][d]['EUR']
+        rates[d] = data['rates'][d]['USD']
     return  rates
 
 dates = []
@@ -40,29 +39,24 @@ dates.append(today)
 print(len(list(EUR_rate.keys())))
 print(len(dates))
 
-last_rate = API_call('https://api.exchangeratesapi.io/' + str(today - timedelta(days=i)) + '?base=USD')['rates']['EUR']
+last_rate = API_call('https://api.exchangeratesapi.io/' + str(today - timedelta(days=i)) + '?base=PLN')['rates']['USD']
 up_or_down = {}
 
-for i in dates:
+for i in dates[::-1]:
     if i not in list(EUR_rate.keys()):
         EUR_rate[i] = last_rate
-    if EUR_rate[i] > last_rate:
+    if EUR_rate[i] < last_rate:
         up_or_down[i] = -1
-    elif EUR_rate[i] < last_rate:
+    elif EUR_rate[i] > last_rate:
         up_or_down[i] = 1
     else:
         up_or_down[i] = 0
     last_rate = EUR_rate[i]
 
-print(len(list(EUR_rate.keys())))
-print(len(dates))
-
-# for i in EUR_rate:
-#     print('%s, %f'%(i ,EUR_rate[i]))
-
 id = 0
-for i in EUR_rate:
-    cursor.execute("INSERT INTO Currency VALUES ('%d','PLN','USD','%f','%s')"%(id,EUR_rate[i],i))
-    id += 1
-#conn.commit()
-print(up_or_down)
+# for i in EUR_rate:
+#     cursor.execute("INSERT INTO Currency VALUES ('%d','PLN','USD','%f','%s','%d')"%(id,EUR_rate[i],i,up_or_down[i]))
+#     id += 1
+
+cursor.execute("ALTER TABLE SalesOrdeHeader ADD SubTotalPLN AS (SubTotal / Rate)")
+conn.commit()
